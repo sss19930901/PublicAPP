@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">TEST</string>
+    <string name="Button">取得看板</string>
+    <string name="Login_Button">登入</string>
+    <string name="Account">帳號:</string>
+    <string name="Password">密碼:</string>
+</resources>
