@@ -35,7 +35,6 @@ public class loginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         textView = findViewById(R.id.textView10);
         loginbutton = findViewById(R.id.button_login2);
-
         loginbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -97,5 +96,4 @@ public class loginActivity extends AppCompatActivity {
             });
         }
     };
-
 }

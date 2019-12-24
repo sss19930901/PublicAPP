@@ -52,8 +52,7 @@
         android:id="@+id/choose_files"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="104dp"
-        android:layout_marginLeft="104dp"
+        android:layout_marginStart="204dp"
         android:layout_marginTop="472dp"
         android:text="上傳檔案"
         app:layout_constraintStart_toStartOf="parent"
@@ -105,6 +104,16 @@
 
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.036"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/timepicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="104dp"
+        android:layout_marginTop="472dp"
+        android:text="選擇時間"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

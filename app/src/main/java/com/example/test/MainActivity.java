@@ -48,10 +48,10 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     TextView textView;
     ImageView testImg;
-    Button button,loginbutton,choosebutton,dcl_01_01,dcl_01_02,dcl_02_01;
-    String result,account_str,password_str,board =",";
+    Button button,loginbutton,choosebutton,dcl_01_01,dcl_01_02,dcl_02_01,timebutton;
+    String result,account_str,password_str,upload_time,board =",";
     int choice_count = 0;
-    boolean login_state = false;
+    boolean login_state = false,time_state = false;
 
 
     @Override
@@ -68,9 +68,8 @@ public class MainActivity extends AppCompatActivity {
         textView = findViewById(R.id.textView_id);
         loginbutton = findViewById(R.id.button_login);
         testImg = findViewById(R.id.ImgView_id);
-        // 宣告按鈕的監聽器監聽按鈕是否被按下
-        // 跟上次在 View 設定的方式並不一樣
-        // 我只是覺得好像應該也教一下這種寫法
+        timebutton  = findViewById(R.id.timepicker);
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             // 按鈕事件
@@ -84,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         choosebutton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(login_state && choice_count>0){
+                    if(login_state && time_state && choice_count>0){
                         Intent intent = new Intent( Intent.ACTION_GET_CONTENT );
                         intent.setType( "image/*" );
                         Intent destIntent = Intent.createChooser( intent, "選擇檔案" );
@@ -95,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
                     else if(choice_count==0){
                         textView.setText("尚未選擇看板");
                     }
+                    else if(!time_state)
+                        textView.setText("尚未選擇時間");
                 }
         });
         dcl_01_01.setOnClickListener(new View.OnClickListener() {
@@ -133,12 +134,35 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        timebutton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (dcl_01_01.isSelected())
+                {
+                    board = board.concat("1,");
+                }
+                if (dcl_01_02.isSelected())
+                {
+                    board = board.concat("2,");
+                }
+                if (dcl_02_01.isSelected())
+                {
+                    board = board.concat("3,");
+                }
+                if(board.length() > 1) {
+                    Intent intent = new Intent(MainActivity.this, select_timeActivity.class);
+                    intent.putExtra("board", board);
+                    startActivityForResult(intent, 2);
+                }
+                else{
+                    textView.setText("請先選擇看板");
+                }
+            }
+        });
     }
-
     @Override
     protected void onRestart() {
         super.onRestart();
-        textView.setText("");
+        //textView.setText(dateTime);
         if(login_state) {
             loginbutton.setText("帳號資訊");
             loginbutton.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -179,12 +202,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        else if(requestCode == 2){
+            if ( resultCode == RESULT_OK ){
+                upload_time = data.getStringExtra("upload_time");
+                time_state = true;
+                textView.setText(upload_time);
+            }
+        }
     }
 
     public void login_page(View view) {
         Intent intent = new Intent(this, loginActivity.class);
         startActivityForResult(intent,0);
     }
+
+
 
     private Runnable getInformation = new Runnable(){
         public void run()
@@ -276,10 +308,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
     public void UploadFiles (final Bitmap image) {
         testImg.setImageBitmap(image);
-        if (dcl_01_01.isSelected())
+        /*if (dcl_01_01.isSelected())
         {
             board = board.concat("1,");
         }
@@ -290,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
         if (dcl_02_01.isSelected())
         {
             board = board.concat("3,");
-        }
+        }*/
         new Thread(new Runnable() {
 
             public void run() {
@@ -303,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
                         .addFormDataPart("file", "test.png", RequestBody.create(MediaType.parse("image/*"),byteArray))
                         .addFormDataPart("account",account_str)
                         .addFormDataPart("board",board)
+                        .addFormDataPart("upload_time",upload_time)
                         .build();
 
                 Request request = new Request.Builder()
@@ -314,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
                     if(response.isSuccessful()){
                         Log.i("Success tag",response.body().string());
                         board = "上傳成功" + board;
-                        textView.setText(board);
+                        //textView.setText(board);
                         board = ",";
                     }
                 }
