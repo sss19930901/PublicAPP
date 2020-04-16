@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:weightSum="3">
+
+    <TextView
+        android:id="@+id/user"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.6"
+        android:text="User Information"
+        android:textSize="25sp"
+        android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:weightSum="2"
+        android:layout_weight="0.7">
+
+        <Button
+            android:id="@+id/file"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1.5"
+            android:text="管理檔案"
+            android:textSize="25sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:weightSum="2"
+        android:layout_weight="0.7">
+
+        <Button
+            android:id="@+id/signage"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1.5"
+            android:text="管理任務"
+            android:textSize="25sp"/>
+    </LinearLayout>
+</LinearLayout>
