@@ -26,6 +26,7 @@ public class signage_informationActivity extends FragmentActivity implements OnM
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signage_information);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
