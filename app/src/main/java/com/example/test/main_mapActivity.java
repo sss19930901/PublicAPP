@@ -38,6 +38,7 @@ public class main_mapActivity extends FragmentActivity implements OnMapReadyCall
             login.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent intent = new Intent(main_mapActivity.this, userinformationActivity.class);
+                    intent.putExtra("account", account_str);
                     startActivityForResult(intent,2);
                 }
             });
@@ -53,6 +54,7 @@ public class main_mapActivity extends FragmentActivity implements OnMapReadyCall
             login.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent intent = new Intent(main_mapActivity.this, userinformationActivity.class);
+                    intent.putExtra("account", account_str);
                     startActivityForResult(intent,2);
                 }
             });

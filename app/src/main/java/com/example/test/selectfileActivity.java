@@ -270,7 +270,7 @@ public class selectfileActivity extends AppCompatActivity {
         }
     };
 
-    private class GetImage extends AsyncTask<String , Integer , Bitmap[]> {
+    class GetImage extends AsyncTask<String , Integer , Bitmap[]> {
 
         @Override
         protected void onPreExecute() {

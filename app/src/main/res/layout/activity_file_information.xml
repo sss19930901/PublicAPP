@@ -1,37 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:weightSum="10">
-    <ImageView
-        android:layout_width="fill_parent"
+
+    <LinearLayout
+        android:id="@+id/selectfile"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="7.25"/>
+        android:layout_weight="7.25"
+        android:orientation="vertical"
+        android:weightSum="10"></LinearLayout>
+
     <TextView
+        android:id="@+id/description"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1.75"
-        android:text="檔案 ID: 004\n檔案大小: 1.5MB\n審查狀態: 已審核\n上傳日期: 2020/03/22\n刊登次數: 2\n已加入常用檔案: 否"/>
+        android:text="檔案 ID: \n檔案大小: \n審查狀態: \n上傳日期: \n刊登次數: \n已加入常用檔案: " />
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="bottom"
         android:orientation="horizontal"
-        android:weightSum="2"
-        android:layout_weight="1">
+        android:weightSum="2">
+
         <Button
-            android:id="@+id/userinformation"
-            android:text="加入常用檔案"
+            android:id="@+id/addusual"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="加入/刪除常用檔案" />
+
         <Button
-            android:id="@+id/home"
-            android:text="上傳檔案"
+            android:id="@+id/upload"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="上傳檔案" />
     </LinearLayout>
 </LinearLayout>

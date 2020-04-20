@@ -6,12 +6,12 @@
     android:weightSum="3">
 
     <TextView
-        android:id="@+id/user"
+        android:id="@+id/userinformation"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1.6"
         android:text="User Information"
-        android:textSize="25sp"
+        android:textSize="15sp"
         android:gravity="center"/>
 
     <LinearLayout
