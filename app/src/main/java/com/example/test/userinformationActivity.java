@@ -77,7 +77,7 @@ public class userinformationActivity extends AppCompatActivity {
 
         signage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Intent intent = new Intent(userinformationActivity.this, signage_informationActivity.class);
+                Intent intent = new Intent(userinformationActivity.this, select_signageinformation.class);
                 startActivityForResult(intent,1);
             }
         });
