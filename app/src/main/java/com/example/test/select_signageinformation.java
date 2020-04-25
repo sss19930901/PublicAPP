@@ -5,6 +5,7 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,14 +13,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
+
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class select_signageinformation extends AppCompatActivity {
 
+    String result,account;
+    String[] questID,start,end,alone,other_users,resultarr;
     private ViewPager viewPager;
 
     //三個view
+    private View[] view;
     private View view1;
     private View view2;
     private View view3;
@@ -41,38 +53,77 @@ public class select_signageinformation extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_signageinformation);
 
-        //將view加進pageview中
-        viewPager = (ViewPager)findViewById(R.id.viewPager);
-        view1 = getLayoutInflater().inflate(R.layout.viewpager,null);
-        view2 = getLayoutInflater().inflate(R.layout.viewpager,null);
-        view3 = getLayoutInflater().inflate(R.layout.viewpager,null);
-        pageview = new ArrayList<View>();
-        pageview.add(view1);
-        pageview.add(view2);
-        pageview.add(view3);
+        Intent intent = getIntent();
+        account = intent.getStringExtra("account");
 
-        //viewPager下面的圓點，ViewGroup
-        //LinearLayout layer1 = findViewById(R.id.viewGroup);
-        group = (ViewGroup)findViewById(R.id.viewGroup);
-        tips = new ImageView[pageview.size()];
-        for(int i =0;i<pageview.size();i++){
-            imageView = new ImageView(select_signageinformation.this);
-            imageView.setLayoutParams(new ViewGroup.LayoutParams(20,20));
-            imageView.setPadding(20, 0, 20, 0);
-            tips[i] = imageView;
-
-            //預設第一張圖顯示為選中狀態
-            if (i == 0) {
-                tips[i].setBackgroundResource(R.mipmap.page_indicator_focused);
-            } else {
-                tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
-            }
-            group.addView(tips[i]);
+        try{
+            Thread thread = new Thread(GetUserRequest);
+            thread.start();
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        //這裡的mypagerAdapter是第三步定義好的。
-        viewPager.setAdapter(new mypagerAdapter(pageview));
-        //這裡的GuiPageChangeListener是第四步定義好的。
-        viewPager.addOnPageChangeListener(new GuidePageChangeListener());
+        if(result.equals("0")) {
+            LinearLayout templayout = findViewById(R.id.layout1);
+            templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    0, 0));
+            TextView textView = findViewById(R.id.text);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    0, 2));
+            textView.setText("您目前沒有租用看板");
+        }
+        else {
+            resultarr = result.split("]");
+
+            resultarr[0] = resultarr[0].substring(1);
+            questID = resultarr[0].split(",");
+
+            resultarr[1] = resultarr[1].substring(1);
+            start = resultarr[1].split(",");
+
+            resultarr[2] = resultarr[2].substring(1);
+            end = resultarr[2].split(",");
+
+            resultarr[3] = resultarr[3].substring(1);
+            alone = resultarr[3].split(",");
+
+            resultarr[4] = resultarr[4].substring(1);
+            other_users = resultarr[4].split(",");
+
+            //將view加進pageview中
+            viewPager = findViewById(R.id.viewPager);
+            viewPager.setClipToPadding(false);
+            viewPager.setPadding(40, 0, 40, 0);
+            viewPager.setPageMargin(20);
+            view = new View[questID.length];
+            pageview = new ArrayList<View>();
+            for (int i = 0; i < questID.length; i++) {
+                view[i] = getLayoutInflater().inflate(R.layout.viewpager, null);
+                pageview.add(view[i]);
+            }
+
+            //viewPager下面的圓點，ViewGroup
+            group = findViewById(R.id.viewGroup);
+            tips = new ImageView[pageview.size()];
+            for (int i = 0; i < pageview.size(); i++) {
+                imageView = new ImageView(select_signageinformation.this);
+                imageView.setLayoutParams(new ViewGroup.LayoutParams(30, 30));
+                imageView.setPadding(20, 0, 20, 0);
+                tips[i] = imageView;
+
+                //預設第一張圖顯示為選中狀態
+                if (i == 0) {
+                    tips[i].setBackgroundResource(R.mipmap.page_indicator_focused);
+                } else {
+                    tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
+                }
+                group.addView(tips[i]);
+            }
+            //這裡的mypagerAdapter是第三步定義好的。
+            viewPager.setAdapter(new mypagerAdapter(pageview));
+            //這裡的GuiPageChangeListener是第四步定義好的。
+            viewPager.addOnPageChangeListener(new GuidePageChangeListener());
+        }
     }
 
     class mypagerAdapter extends PagerAdapter {
@@ -93,10 +144,41 @@ public class select_signageinformation extends AppCompatActivity {
             LayoutInflater inflater = (LayoutInflater) collection.getContext()
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View page = inflater.inflate(R.layout.viewpager, null);
+            questID[pos] = questID[pos].substring(1,questID[pos].length()-1);
+            start[pos] = start[pos].substring(1,start[pos].length()-8);
+            end[pos] = end[pos].substring(1,end[pos].length()-8);
+            alone[pos] = alone[pos].substring(1,alone[pos].length()-1);
+            other_users[pos] = other_users[pos].substring(1,other_users[pos].length()-1);
+
+            TextView temp = page.findViewById(R.id.RequestID);
+            temp.setText("RequestID: " + questID[pos]);
+
+            String[] tempstr;
+
+            temp = page.findViewById(R.id.start);
+            tempstr = start[pos].split(" ");
+            temp.setText(tempstr[0] + "\n" + tempstr[1]);
+
+            temp = page.findViewById(R.id.end);
+            tempstr = end[pos].split(" ");
+            temp.setText(tempstr[0] + "\n" + tempstr[1]);
+
+            if(alone[pos].equals("1"))
+                alone[pos] = "否";
+            else
+                alone[pos] = "是";
+            temp = page.findViewById(R.id.alone);
+            temp.setText("是否共享: " + alone[pos]);
+
+            temp = page.findViewById(R.id.other_users);
+            temp.setText("共用人數: " + other_users[pos] + "人");
+
             page.setOnClickListener(new View.OnClickListener(){
                 public void onClick(View v){
-                    //this will log the page number that was click
                     Log.i("TAG", "This page was clicked: " + pos);
+                    Intent intent = new Intent(select_signageinformation.this, signage_informationActivity.class);
+                    intent.putExtra("questID", questID[pos]);
+                    startActivity(intent);
                 }
             });
             ((ViewPager) collection).addView(page, 0);
@@ -145,4 +227,26 @@ public class select_signageinformation extends AppCompatActivity {
             }
         }
     }
+
+    private Runnable GetUserRequest = new Runnable(){
+        public void run() {
+            OkHttpClient client = new OkHttpClient();
+            RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("account",account)
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://140.116.72.152/GetUserRequest.php")
+                    .post(requestBody)
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(response.isSuccessful()){
+                    Log.i("Success tag","check success");
+                    result = response.body().string();
+                    Log.i("Result",result);
+                }
+            }
+            catch (IOException e) { e.printStackTrace(); }
+        }
+    };
 }

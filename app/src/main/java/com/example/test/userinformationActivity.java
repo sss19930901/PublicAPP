@@ -78,6 +78,7 @@ public class userinformationActivity extends AppCompatActivity {
         signage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(userinformationActivity.this, select_signageinformation.class);
+                intent.putExtra("account", account);
                 startActivityForResult(intent,1);
             }
         });

@@ -2,6 +2,7 @@ package com.example.test;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -23,12 +24,16 @@ public class signage_informationActivity extends FragmentActivity implements OnM
 
     private GoogleMap mMap;
     Button manage,home;
+    String questID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signage_information);
+        Intent intent = getIntent();
+        questID = intent.getStringExtra("questID");
+        Log.d("questID",questID);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -53,31 +58,7 @@ public class signage_informationActivity extends FragmentActivity implements OnM
         //initViews();
     }
 
-    private void initViews(){
-        ListView mList =  findViewById(R.id.listView);
-        String[] strs = new String[3];
-        strs[0] = "Signage1";
-        strs[1] = "Signage2";
-        strs[2] = "Signage3";
 
-        ListAdapter mAdapter =
-                new ArrayAdapter<String>(this,
-                        android.R.layout.simple_list_item_single_choice,
-                        android.R.id.text1,
-                        strs);
-            mList.setAdapter(mAdapter);
-
-            mList.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-            mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                AbsListView list = (AbsListView)adapterView;
-                int idx = list.getCheckedItemPosition();
-                String checked = (String)adapterView.getAdapter().getItem(idx);
-                //textView1.setText(dateTime + " " + checked.substring(0,5));
-            }
-        });
-    }
 
     /**
      * Manipulates the map once available.
