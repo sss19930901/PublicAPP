@@ -36,7 +36,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class select_timeActivity extends AppCompatActivity {
-    String dateTime,board,occupied_slot,chosen_slot,Shared;
+    String dateTime,board,occupied_slot,chosen_slot,Shared,Source,intent_slot;
     Date date;
     Button confirm,cancel,smaller,bigger;
     int picknum = 15;
@@ -51,7 +51,13 @@ public class select_timeActivity extends AppCompatActivity {
         Intent intent = getIntent();
         board = intent.getStringExtra("chosen_board");
         Shared = intent.getStringExtra("Shared");
+        Source = intent.getStringExtra("Source");
+        if(Source.equals("Update")) {
+            intent_slot = intent.getStringExtra("intent_slot");
+            Log.i("intent_slot", intent_slot);
+        }
         Log.i("chosen_board",board);
+
         chosen_slot =",";
         smaller = findViewById(R.id.smaller);
         smaller.setOnClickListener(new View.OnClickListener() {
@@ -102,31 +108,39 @@ public class select_timeActivity extends AppCompatActivity {
         });
 
         confirm = findViewById(R.id.confirm);
-        confirm.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if(chosen_slot.length() > 1) {
-                    Intent intent = new Intent(select_timeActivity.this, selectfileActivity.class);
-                    intent.putExtra("chosen_slot", chosen_slot);
-                    intent.putExtra("chosen_board", board);
-                    intent.putExtra("Shared", Shared);
-                    startActivity(intent);
+        cancel = findViewById(R.id.cancel);
+
+        if(Source.equals("Publish")) {
+            confirm.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    if (chosen_slot.length() > 1) {
+                        Intent intent = new Intent(select_timeActivity.this, selectfileActivity.class);
+                        intent.putExtra("chosen_slot", chosen_slot);
+                        intent.putExtra("chosen_board", board);
+                        intent.putExtra("Shared", Shared);
+                        intent.putExtra("Source", "Publish");
+                        startActivity(intent);
                     /*getIntent().putExtra("upload_time",upload_time);
                     setResult(RESULT_OK,getIntent());
                     finish();*/
+                    } else {
+                        Toast.makeText(select_timeActivity.this, "請先選擇時間", Toast.LENGTH_LONG).show();
+                    }
                 }
-                else{
-                    Toast.makeText(select_timeActivity.this, "請先選擇時間", Toast.LENGTH_LONG).show();
+            });
+            cancel.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent intent = new Intent(select_timeActivity.this, MainActivity.class);
+                    startActivity(intent);
                 }
-            }
-        });
+            });
+        }
+        else if(Source.equals("Update")){
+            confirm.setText("切換共用狀態");
+            cancel.setText("確認");
+        }
 
-        cancel = findViewById(R.id.cancel);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent intent = new Intent(select_timeActivity.this, main_mapActivity.class);
-                startActivity(intent);
-            }
-        });
+
 
         Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);
@@ -165,6 +179,10 @@ public class select_timeActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
 
         occupied_slot = occupied_slot.substring(1,occupied_slot.length()-1); //去掉 "[" "]"
+        //如果是延長時間，要排除自己之前選擇的時間
+        if(Source.equals("Update"))
+            occupied_slot = occupied_slot + intent_slot;
+        Log.i("occupied_slot++",occupied_slot);
         String[] occupied_strs = occupied_slot.split(",");
         //occupied_slot = "";
         Set<String> words = new HashSet<>();            //=======================
@@ -178,6 +196,8 @@ public class select_timeActivity extends AppCompatActivity {
             temp[i] = Integer.parseInt(tempArray[i].toString());  //=================
         }
         Arrays.sort(temp);
+        //for(int i = 0; i < temp.length; i++ )
+        //   Log.i("sorted",String.valueOf(temp[i]));
          /*List<Integer> templist = Arrays.asList(temp);
         for (int i = 0; i < templist.size(); i++)
             if (templist.get(i) % picknum != 0)

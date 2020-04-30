@@ -1,6 +1,8 @@
 package com.example.test;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,19 +23,19 @@ import okhttp3.Response;
 
 public class userinformationActivity extends AppCompatActivity {
 
-    Button file,signage;
+    Button file,signage,logout;
     TextView userinformation;
     String account,email,sex,phonenumber,registerday,result;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_userinformation);
-
-        Intent intent = getIntent();
-        account = intent.getStringExtra("account");
-        if(account != null)
-            Log.i("intent account", account);
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        account = sharedPreferences.getString("account",null);
 
         try{
             Thread thread = new Thread(GetUserInformation);
@@ -58,6 +60,7 @@ public class userinformationActivity extends AppCompatActivity {
         userinformation = findViewById(R.id.userinformation);
         file = findViewById(R.id.file);
         signage = findViewById(R.id.signage);
+        logout = findViewById(R.id.logout);
 
         userinformation.setText(
                 "使用者帳號: " + account + "\n\n" +
@@ -70,7 +73,6 @@ public class userinformationActivity extends AppCompatActivity {
         file.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(userinformationActivity.this, file_informationActivity.class);
-                intent.putExtra("account", account);
                 startActivityForResult(intent,0);
             }
         });
@@ -78,8 +80,17 @@ public class userinformationActivity extends AppCompatActivity {
         signage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(userinformationActivity.this, select_signageinformation.class);
-                intent.putExtra("account", account);
                 startActivityForResult(intent,1);
+            }
+        });
+
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editor.clear();
+                editor.commit();
+                setResult(RESULT_OK,getIntent());
+                finish();
             }
         });
     }

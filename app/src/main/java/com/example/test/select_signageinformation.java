@@ -6,6 +6,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,14 +28,11 @@ import okhttp3.Response;
 public class select_signageinformation extends AppCompatActivity {
 
     String result,account;
-    String[] questID,start,end,alone,other_users,resultarr;
+    String[] RequestID,start,end,alone,resultarr;
     private ViewPager viewPager;
 
     //三個view
     private View[] view;
-    private View view1;
-    private View view2;
-    private View view3;
 
     //用來存放view並傳遞給viewPager的介面卡。
     private ArrayList<View> pageview;
@@ -44,7 +42,7 @@ public class select_signageinformation extends AppCompatActivity {
     private ImageView[] tips = new ImageView[3];
 
     private ImageView imageView;
-
+    private SharedPreferences sharedPreferences;
     //圓點組的物件
     private ViewGroup group;
 
@@ -53,9 +51,8 @@ public class select_signageinformation extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_signageinformation);
 
-        Intent intent = getIntent();
-        account = intent.getStringExtra("account");
-
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        account = sharedPreferences.getString("account",null);
         try{
             Thread thread = new Thread(GetUserRequest);
             thread.start();
@@ -70,13 +67,13 @@ public class select_signageinformation extends AppCompatActivity {
             TextView textView = findViewById(R.id.text);
             textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                     0, 2));
-            textView.setText("您目前沒有租用看板");
+            textView.setText("您目前沒有租用記錄");
         }
         else {
             resultarr = result.split("]");
 
             resultarr[0] = resultarr[0].substring(1);
-            questID = resultarr[0].split(",");
+            RequestID = resultarr[0].split(",");
 
             resultarr[1] = resultarr[1].substring(1);
             start = resultarr[1].split(",");
@@ -87,17 +84,24 @@ public class select_signageinformation extends AppCompatActivity {
             resultarr[3] = resultarr[3].substring(1);
             alone = resultarr[3].split(",");
 
-            resultarr[4] = resultarr[4].substring(1);
-            other_users = resultarr[4].split(",");
+            //resultarr[4] = resultarr[4].substring(1);
+            //other_users = resultarr[4].split(",");
+
+            for(int i = 0; i < RequestID.length; i++) {
+                RequestID[i] = RequestID[i].substring(1, RequestID[i].length() - 1);
+                alone[i] = alone[i].substring(1, alone[i].length() - 1);
+                start[i] = start[i].substring(1,start[i].length()-8);
+                end[i] = end[i].substring(1,end[i].length()-8);
+            }
 
             //將view加進pageview中
             viewPager = findViewById(R.id.viewPager);
             viewPager.setClipToPadding(false);
             viewPager.setPadding(40, 0, 40, 0);
             viewPager.setPageMargin(20);
-            view = new View[questID.length];
+            view = new View[RequestID.length];
             pageview = new ArrayList<View>();
-            for (int i = 0; i < questID.length; i++) {
+            for (int i = 0; i < RequestID.length; i++) {
                 view[i] = getLayoutInflater().inflate(R.layout.viewpager, null);
                 pageview.add(view[i]);
             }
@@ -144,14 +148,9 @@ public class select_signageinformation extends AppCompatActivity {
             LayoutInflater inflater = (LayoutInflater) collection.getContext()
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View page = inflater.inflate(R.layout.viewpager, null);
-            questID[pos] = questID[pos].substring(1,questID[pos].length()-1);
-            start[pos] = start[pos].substring(1,start[pos].length()-8);
-            end[pos] = end[pos].substring(1,end[pos].length()-8);
-            alone[pos] = alone[pos].substring(1,alone[pos].length()-1);
-            other_users[pos] = other_users[pos].substring(1,other_users[pos].length()-1);
 
             TextView temp = page.findViewById(R.id.RequestID);
-            temp.setText("RequestID: " + questID[pos]);
+            temp.setText("RequestID: " + RequestID[pos]);
 
             String[] tempstr;
 
@@ -170,14 +169,15 @@ public class select_signageinformation extends AppCompatActivity {
             temp = page.findViewById(R.id.alone);
             temp.setText("是否共享: " + alone[pos]);
 
-            temp = page.findViewById(R.id.other_users);
-            temp.setText("共用人數: " + other_users[pos] + "人");
+            //temp = page.findViewById(R.id.other_users);
+            //temp.setText("共用人數: " + other_users[pos] + "人");
 
             page.setOnClickListener(new View.OnClickListener(){
                 public void onClick(View v){
                     Log.i("TAG", "This page was clicked: " + pos);
                     Intent intent = new Intent(select_signageinformation.this, signage_informationActivity.class);
-                    intent.putExtra("questID", questID[pos]);
+                    intent.putExtra("RequestID", RequestID[pos]);
+                    intent.putExtra("input", "history");
                     startActivity(intent);
                 }
             });
@@ -233,6 +233,7 @@ public class select_signageinformation extends AppCompatActivity {
             OkHttpClient client = new OkHttpClient();
             RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
                     .addFormDataPart("account",account)
+                    .addFormDataPart("input","history")
                     .build();
             Request request = new Request.Builder()
                     .url("http://140.116.72.152/GetUserRequest.php")

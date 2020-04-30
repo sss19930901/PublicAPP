@@ -9,7 +9,7 @@
         android:layout_height="0dp"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="您好，使用者"
+        android:text="歷史任務清單"
         android:layout_weight="2"
         android:textSize="25sp">
     </TextView>

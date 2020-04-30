@@ -1,7 +1,9 @@
 package com.example.test;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -47,12 +49,13 @@ public class file_informationActivity extends AppCompatActivity {
     String[] IDandState,file_ID,State,size,times,upload_date,usually;
     ImageView[] imageView;
     Boolean[] chosen_file;
+    private SharedPreferences sharedPreferences;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file_information);
-        Intent intent = getIntent();
-        account = intent.getStringExtra("account");
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        account = sharedPreferences.getString("account",null);
 
         description = findViewById(R.id.description);
 

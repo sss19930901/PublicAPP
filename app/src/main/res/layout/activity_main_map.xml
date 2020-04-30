@@ -1,34 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    android:weightSum="10">
 
     <TextView
-        android:layout_width="310dp"
-        android:layout_height="55dp"
+        android:layout_width="fill_parent"
+        android:layout_height="0sp"
         android:layout_gravity="center"
         android:gravity="center"
+        android:layout_weight="1"
         android:text="您好，使用者"
         android:layout_marginTop="25dp"
-        android:textSize="25sp"></TextView>
+        android:textSize="25sp">
+    </TextView>
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="500dp"
-        android:layout_marginTop="25dp"
+        android:layout_height="0sp"
+        android:layout_marginTop="25sp"
+        android:layout_weight="8"
         tools:context=".main_mapActivity" />
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0sp"
         android:gravity="bottom"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:weightSum="2">
 

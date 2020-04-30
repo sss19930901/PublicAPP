@@ -1,19 +1,29 @@
 package com.example.test;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
+import com.google.android.gms.maps.SupportMapFragment;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -44,323 +54,483 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-
 public class MainActivity extends AppCompatActivity {
-    TextView textView;
-    ImageView testImg;
-    Button button,loginbutton,choosebutton,dcl_01_01,dcl_01_02,dcl_02_01,timebutton;
-    String result,account_str,password_str,upload_time,board =",";
-    int choice_count = 0;
-    boolean login_state = false,time_state = false;
-
+    Button upload,login;
+    String result;
+    String[] RequestID,start,end,alone,other_users,resultarr;
+    private View[] view;
+    private ViewPager viewPager;
+    private ViewGroup group;
+    private ArrayList<View> pageview;
+    private ImageView[] tips = new ImageView[3];
+    private ImageView imageView;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // 找到視圖的元件並連接
-        //testImg = findViewById(R.id.imageViewObj);
-        dcl_01_01 = findViewById(R.id.dcl_01_01);
-        dcl_01_02 = findViewById(R.id.dcl_01_02);
-        dcl_02_01 = findViewById(R.id.dcl_02_01);
-        button = findViewById(R.id.button_id);
-        choosebutton = findViewById(R.id.choose_files);
-        textView = findViewById(R.id.textView_id);
-        loginbutton = findViewById(R.id.button_login);
-        testImg = findViewById(R.id.ImgView_id);
-        timebutton  = findViewById(R.id.timepicker);
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            // 按鈕事件
-            public void onClick(View view) {
-                // 按下之後會執行的程式碼
-                // 宣告執行緒
-                Thread thread = new Thread(mutiThread);
-                thread.start(); // 開始執行
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        sharedPreferences.getBoolean("login_state",false);
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+
+        upload = findViewById(R.id.upload);
+        login = findViewById(R.id.login);
+
+        if(sharedPreferences.getBoolean("login_state",false)) {
+            login.setText("帳號資訊");
+            login.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, userinformationActivity.class);
+                    startActivityForResult(intent,2);
+                }
+            });
+
+            try {
+                Thread thread = new Thread(GetUserRequest);
+                thread.start();
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        });
-        choosebutton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(login_state && time_state && choice_count>0){
-                        Intent intent = new Intent( Intent.ACTION_GET_CONTENT );
-                        intent.setType( "image/*" );
-                        Intent destIntent = Intent.createChooser( intent, "選擇檔案" );
-                        startActivityForResult( destIntent, 1 );
+            if (result.equals("0")) {
+                LinearLayout templayout = findViewById(R.id.layout1);
+                templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 0));
+                TextView textView = findViewById(R.id.text);
+                textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 2.5f));
+                textView.setText("您目前沒有租用看板");
+            }
+            else {
+                resultarr = result.split("]");
+
+                resultarr[0] = resultarr[0].substring(1);
+                RequestID = resultarr[0].split(",");
+
+                resultarr[1] = resultarr[1].substring(1);
+                start = resultarr[1].split(",");
+
+                resultarr[2] = resultarr[2].substring(1);
+                end = resultarr[2].split(",");
+
+                resultarr[3] = resultarr[3].substring(1);
+                alone = resultarr[3].split(",");
+
+                for(int i = 0; i < RequestID.length; i++) {
+                    RequestID[i] = RequestID[i].substring(1, RequestID[i].length() - 1);
+                    alone[i] = alone[i].substring(1, alone[i].length() - 1);
+                    start[i] = start[i].substring(1,start[i].length()-8);
+                    end[i] = end[i].substring(1,end[i].length()-8);
+                }
+
+                //resultarr[4] = resultarr[4].substring(1);
+                //other_users = resultarr[4].split(",");
+
+                //將view加進pageview中
+                viewPager = findViewById(R.id.viewPager);
+                viewPager.setClipToPadding(false);
+                viewPager.setPadding(40, 0, 40, 0);
+                viewPager.setPageMargin(20);
+                view = new View[RequestID.length];
+                pageview = new ArrayList<View>();
+                for (int i = 0; i < RequestID.length; i++) {
+                    view[i] = getLayoutInflater().inflate(R.layout.viewpager, null);
+                    pageview.add(view[i]);
+                }
+
+                //viewPager下面的圓點，ViewGroup
+                group = findViewById(R.id.viewGroup);
+                tips = new ImageView[pageview.size()];
+                for (int i = 0; i < pageview.size(); i++) {
+                    imageView = new ImageView(MainActivity.this);
+                    imageView.setLayoutParams(new ViewGroup.LayoutParams(30, 30));
+                    imageView.setPadding(20, 0, 20, 0);
+                    tips[i] = imageView;
+
+                    //預設第一張圖顯示為選中狀態
+                    if (i == 0) {
+                        tips[i].setBackgroundResource(R.mipmap.page_indicator_focused);
+                    } else {
+                        tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
                     }
-                    else if(!login_state)
-                        textView.setText("尚未登入");
-                    else if(choice_count==0){
-                        textView.setText("尚未選擇看板");
-                    }
-                    else if(!time_state)
-                        textView.setText("尚未選擇時間");
+                    group.addView(tips[i]);
                 }
-        });
-        dcl_01_01.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!dcl_01_01.isSelected()) {
-                    dcl_01_01.setSelected(true);
-                    choice_count++;
-                } else {
-                    dcl_01_01.setSelected(false);
-                    choice_count--;
-                }
+                //這裡的mypagerAdapter是第三步定義好的。
+                viewPager.setAdapter(new mypagerAdapter(pageview));
+                //這裡的GuiPageChangeListener是第四步定義好的。
+                viewPager.addOnPageChangeListener(new GuidePageChangeListener());
             }
-        });
-        dcl_01_02.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!dcl_01_02.isSelected()) {
-                    dcl_01_02.setSelected(true);
-                    choice_count++;
-                } else {
-                    dcl_01_02.setSelected(false);
-                    choice_count--;
-                }
-            }
-        });
-        dcl_02_01.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!dcl_02_01.isSelected()) {
-                    dcl_02_01.setSelected(true);
-                    choice_count++;
-                } else {
-                    dcl_02_01.setSelected(false);
-                    choice_count--;
-                }
-            }
-        });
-        timebutton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (dcl_01_01.isSelected())
-                {
-                    board = board.concat("1,");
-                }
-                if (dcl_01_02.isSelected())
-                {
-                    board = board.concat("2,");
-                }
-                if (dcl_02_01.isSelected())
-                {
-                    board = board.concat("3,");
-                }
-                if(board.length() > 1) {
-                    Intent intent = new Intent(MainActivity.this, select_timeActivity.class);
-                    intent.putExtra("board", board);
-                    startActivityForResult(intent, 2);
-                }
-                else{
-                    textView.setText("請先選擇看板");
-                }
-            }
-        });
+        }
+        else {
+            LinearLayout templayout = findViewById(R.id.layout1);
+            templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    0, 0));
+            TextView textView = findViewById(R.id.text);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    0, 2.5f));
+            textView.setText("請先登入以獲取資訊");
+        }
     }
+
     @Override
     protected void onRestart() {
         super.onRestart();
         //textView.setText(dateTime);
-        if(login_state) {
-            loginbutton.setText("帳號資訊");
-            loginbutton.setOnClickListener(new View.OnClickListener() {
+        /*if(sharedPreferences.getBoolean("login_state",false)) {
+            login.setText("帳號資訊");
+            login.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    Thread thread = new Thread(getInformation);
-                    thread.start();
+                    Intent intent = new Intent(MainActivity.this, userinformationActivity.class);
+                    startActivityForResult(intent, 2);
                 }
             });
-        }
+
+            try {
+                Thread thread = new Thread(GetUserRequest);
+                thread.start();
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (result.equals("0")) {
+                LinearLayout templayout = findViewById(R.id.layout1);
+                templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 0));
+                TextView textView = findViewById(R.id.text);
+                textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 2.5f));
+                textView.setText("您目前沒有租用看板");
+            } else {
+                LinearLayout templayout = findViewById(R.id.layout1);
+                templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 2.5f));
+                TextView textView = findViewById(R.id.text);
+                textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 0));
+                resultarr = result.split("]");
+
+                resultarr[0] = resultarr[0].substring(1);
+                RequestID = resultarr[0].split(",");
+
+                resultarr[1] = resultarr[1].substring(1);
+                start = resultarr[1].split(",");
+
+                resultarr[2] = resultarr[2].substring(1);
+                end = resultarr[2].split(",");
+
+                resultarr[3] = resultarr[3].substring(1);
+                alone = resultarr[3].split(",");
+
+                resultarr[4] = resultarr[4].substring(1);
+                other_users = resultarr[4].split(",");
+
+                //將view加進pageview中
+                viewPager = findViewById(R.id.viewPager);
+                viewPager.setClipToPadding(false);
+                viewPager.setPadding(40, 0, 40, 0);
+                viewPager.setPageMargin(20);
+                view = new View[RequestID.length];
+                pageview = new ArrayList<View>();
+                for (int i = 0; i < RequestID.length; i++) {
+                    view[i] = getLayoutInflater().inflate(R.layout.viewpager, null);
+                    pageview.add(view[i]);
+                }
+
+                //viewPager下面的圓點，ViewGroup
+                group = findViewById(R.id.viewGroup);
+                tips = new ImageView[pageview.size()];
+                for (int i = 0; i < pageview.size(); i++) {
+                    imageView = new ImageView(MainActivity.this);
+                    imageView.setLayoutParams(new ViewGroup.LayoutParams(30, 30));
+                    imageView.setPadding(20, 0, 20, 0);
+                    tips[i] = imageView;
+
+                    //預設第一張圖顯示為選中狀態
+                    if (i == 0) {
+                        tips[i].setBackgroundResource(R.mipmap.page_indicator_focused);
+                    } else {
+                        tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
+                    }
+                    group.addView(tips[i]);
+                }
+                //這裡的mypagerAdapter是第三步定義好的。
+                viewPager.setAdapter(new mypagerAdapter(pageview));
+                //這裡的GuiPageChangeListener是第四步定義好的。
+                viewPager.addOnPageChangeListener(new GuidePageChangeListener());
+            }
+        }*/
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0){
+        if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
-                account_str = data.getStringExtra("login_account");
-                password_str = data.getStringExtra("login_password");
-                login_state = true;
-            }
-        }
-        else if(requestCode == 1){
-            if ( resultCode == RESULT_OK ){
-                Uri uri = data.getData();
-                if( uri != null ){
-                    // 利用 Uri 顯示 ImageView 圖片
+                if(sharedPreferences.getBoolean("login_state",false)) {
+                    group = findViewById(R.id.viewGroup);
+                    login.setText("帳號資訊");
+                    login.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View v) {
+                            Intent intent = new Intent(MainActivity.this, userinformationActivity.class);
+                            startActivityForResult(intent, 2);
+                        }
+                    });
+
                     try {
-                        Bitmap image = getBitmapFromUri(uri);
-                        UploadFiles(image);
+                        Thread thread = new Thread(GetUserRequest);
+                        thread.start();
+                        thread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                    catch(Exception e) {
-                         // 如果出事，回傳錯誤訊息
+                    TextView textView = findViewById(R.id.text);
+                    if (result.equals("0")) {
+                        LinearLayout templayout = findViewById(R.id.layout1);
+                        templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 0));
+
+                        group.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 0));
+                        textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 3));
+                        textView.setText("您目前沒有租用看板");
                     }
-                }
-                else{
-                    setTitle("無效的檔案路徑 !!");
+                    else {
+                        LinearLayout templayout = findViewById(R.id.layout1);
+                        templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 2));
+                        group.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 0.5f));
+                        textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                                0, 0.5f));
+                        textView.setText("請點擊任務以獲取詳細訊息");
+                        resultarr = result.split("]");
+
+                        resultarr[0] = resultarr[0].substring(1);
+                        RequestID = resultarr[0].split(",");
+
+                        resultarr[1] = resultarr[1].substring(1);
+                        start = resultarr[1].split(",");
+
+                        resultarr[2] = resultarr[2].substring(1);
+                        end = resultarr[2].split(",");
+
+                        resultarr[3] = resultarr[3].substring(1);
+                        alone = resultarr[3].split(",");
+                        for(int i = 0; i < RequestID.length; i++) {
+                            RequestID[i] = RequestID[i].substring(1, RequestID[i].length() - 1);
+                            alone[i] = alone[i].substring(1, alone[i].length() - 1);
+                            start[i] = start[i].substring(1,start[i].length()-8);
+                            end[i] = end[i].substring(1,end[i].length()-8);
+                        }
+                        //resultarr[4] = resultarr[4].substring(1);
+                        //other_users = resultarr[4].split(",");
+
+                        //將view加進pageview中
+                        viewPager = findViewById(R.id.viewPager);
+                        viewPager.setClipToPadding(false);
+                        viewPager.setPadding(40, 0, 40, 0);
+                        viewPager.setPageMargin(20);
+                        view = new View[RequestID.length];
+                        pageview = new ArrayList<View>();
+                        for (int i = 0; i < RequestID.length; i++) {
+                            view[i] = getLayoutInflater().inflate(R.layout.viewpager, null);
+                            pageview.add(view[i]);
+                        }
+
+                        //viewPager下面的圓點，ViewGroup
+                        tips = new ImageView[pageview.size()];
+                        for (int i = 0; i < pageview.size(); i++) {
+                            imageView = new ImageView(MainActivity.this);
+                            imageView.setLayoutParams(new ViewGroup.LayoutParams(30, 30));
+                            imageView.setPadding(20, 0, 20, 0);
+                            tips[i] = imageView;
+
+                            //預設第一張圖顯示為選中狀態
+                            if (i == 0) {
+                                tips[i].setBackgroundResource(R.mipmap.page_indicator_focused);
+                            } else {
+                                tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
+                            }
+                            group.addView(tips[i]);
+                        }
+                        //這裡的mypagerAdapter是第三步定義好的。
+                        viewPager.setAdapter(new mypagerAdapter(pageview));
+                        //這裡的GuiPageChangeListener是第四步定義好的。
+                        viewPager.addOnPageChangeListener(new GuidePageChangeListener());
+                    }
                 }
             }
         }
-        else if(requestCode == 2){
-            if ( resultCode == RESULT_OK ){
-                upload_time = data.getStringExtra("upload_time");
-                time_state = true;
-                textView.setText(upload_time);
+        else if(requestCode == 2)
+            if (resultCode == RESULT_OK)
+            {
+                if(group.getChildCount() > 0)
+                    group.removeAllViews();
+                LinearLayout templayout = findViewById(R.id.layout1);
+                templayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 0));
+                group = findViewById(R.id.viewGroup);
+                group.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 0));
+                TextView textView = findViewById(R.id.text);
+                textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        0, 3));
+                textView.setText("請先登入以獲取資訊");
+                login.setText("登入");
+                login.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        Intent intent = new Intent(MainActivity.this, loginActivity.class);
+                        startActivityForResult(intent,1);
+                    }
+                });
             }
-        }
     }
 
+    //給layout裡的上傳按鈕使用
+    public void upload_page(View view) {
+        if(sharedPreferences.getBoolean("login_state",false)) {
+            Intent intent = new Intent(this, select_signagetypeActivity.class);
+            startActivityForResult(intent, 0);
+        }
+        else
+            Toast.makeText(this, "請先登入帳號", Toast.LENGTH_LONG).show();
+    }
+    //給layout裡的登入按鈕使用
     public void login_page(View view) {
         Intent intent = new Intent(this, loginActivity.class);
-        startActivityForResult(intent,0);
+        startActivityForResult(intent,1);
     }
 
-
-
-    private Runnable getInformation = new Runnable(){
-        public void run()
-        {
-            try {
-                HttpClient httpclient = new DefaultHttpClient();
-                HttpPost method = new HttpPost("http://140.116.72.152/GetInformation.php");
-                //傳值給PHP
-                List<NameValuePair> vars = new ArrayList<NameValuePair>();
-                vars.add(new BasicNameValuePair("account", account_str));
-                method.setEntity(new UrlEncodedFormEntity(vars, HTTP.UTF_8));
-                vars.add(new BasicNameValuePair("password", password_str));
-                method.setEntity(new UrlEncodedFormEntity(vars, HTTP.UTF_8));
-                //接收PHP回傳的資料
-                HttpResponse response = httpclient.execute(method);
-                HttpEntity entity = response.getEntity();
-
-                if (entity != null) {
-                    result = EntityUtils.toString(entity);
-                } else {
-                    textView.setText("error");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    textView.setText(result);                }
-            });
+    class mypagerAdapter extends PagerAdapter {
+        private ArrayList<View> pageview1;
+        public mypagerAdapter(ArrayList<View> pageview1){
+            this.pageview1 = pageview1;
         }
-    };
-    // Android 有規定，連線網際網路的動作都不能再主線程做執行
-    // 畢竟如果使用者連上網路結果等太久整個系統流程就卡死了
-    private Runnable mutiThread = new Runnable(){
-        public void run()
-        {
-            try {
-                URL url = new URL("http://140.116.72.152/GetBoard.php");
-                // 開始宣告 HTTP 連線需要的物件，這邊通常都是一綑的
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                // 建立 Google 比較挺的 HttpURLConnection 物件
-                connection.setRequestMethod("POST");
-                // 設定連線方式為 POST
-                connection.setDoOutput(true); // 允許輸出
-                connection.setDoInput(true); // 允許讀入
-                connection.setUseCaches(false); // 不使用快取
-                connection.connect(); // 開始連線
-
-                int responseCode =
-                        connection.getResponseCode();
-                // 建立取得回應的物件
-                result = Integer.toString(responseCode);
-                if(responseCode ==
-                        HttpURLConnection.HTTP_OK){
-                    // 如果 HTTP 回傳狀態是 OK ，而不是 Error
-                    InputStream inputStream =
-                            connection.getInputStream();
-                    // 取得輸入串流
-                    BufferedReader bufReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
-                    // 讀取輸入串流的資料
-                    String box = ""; // 宣告存放用字串
-                    String line = null; // 宣告讀取用的字串
-                    while((line = bufReader.readLine()) != null) {
-                        box += line + "\n";
-
-                        // 每當讀取出一列，就加到存放字串後面
-                    }
-                    inputStream.close(); // 關閉輸入串流
-                    result = box; // 把存放用字串放到全域變數
-
-                }
-                // 讀取輸入串流並存到字串的部分
-                // 取得資料後想用不同的格式
-                // 例如 Json 等等，都是在這一段做處理
-
-            } catch(Exception e) {
-                result = e.toString(); // 如果出事，回傳錯誤訊息
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            Log.d("MainActivityDestroy",position+"");
+            if (pageview1.get(position)!=null) {
+                container.removeView(pageview1.get(position));
             }
-             // 當這個執行緒完全跑完後執行
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    textView.setText(result); // 更改顯示文字
-                    dcl_01_01.setVisibility(View.VISIBLE);
-                    dcl_01_02.setVisibility(View.VISIBLE);
-                    dcl_02_01.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        public Object instantiateItem(View collection, final int pos) { //have to make final so we can see it inside of onClick()
+            LayoutInflater inflater = (LayoutInflater) collection.getContext()
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View page = inflater.inflate(R.layout.viewpager, null);
+            Log.i("pos", String.valueOf(RequestID[pos].length()));
+
+            //other_users[pos] = other_users[pos].substring(1,other_users[pos].length()-1);
+
+            TextView temp = page.findViewById(R.id.RequestID);
+            temp.setText("RequestID: " + RequestID[pos]);
+
+            String[] tempstr;
+
+            temp = page.findViewById(R.id.start);
+            tempstr = start[pos].split(" ");
+            temp.setText(tempstr[0] + "\n" + tempstr[1]);
+
+            temp = page.findViewById(R.id.end);
+            tempstr = end[pos].split(" ");
+            Log.i("tempstr",String.valueOf(tempstr.length));
+            temp.setText(tempstr[0] + "\n" + tempstr[1]);
+
+            if(alone[pos].equals("1"))
+                alone[pos] = "否";
+            else
+                alone[pos] = "是";
+            temp = page.findViewById(R.id.alone);
+            temp.setText("是否共享: " + alone[pos]);
+
+            //temp = page.findViewById(R.id.other_users);
+            //temp.setText("共用人數: " + other_users[pos] + "人");
+
+            page.setOnClickListener(new View.OnClickListener(){
+                public void onClick(View v){
+                    Log.i("TAG", "This page was clicked: " + pos);
+                    Intent intent = new Intent(MainActivity.this, signage_informationActivity.class);
+                    intent.putExtra("RequestID", RequestID[pos]);
+                    intent.putExtra("input", "now");
+                    startActivity(intent);
                 }
             });
+            ((ViewPager) collection).addView(page, 0);
+            return page;
         }
-    };
-
-    public void UploadFiles (final Bitmap image) {
-        testImg.setImageBitmap(image);
-        /*if (dcl_01_01.isSelected())
-        {
-            board = board.concat("1,");
-        }
-        if (dcl_01_02.isSelected())
-        {
-            board = board.concat("2,");
-        }
-        if (dcl_02_01.isSelected())
-        {
-            board = board.concat("3,");
+        /*@Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            container.addView(pageview1.get(position));
+            Log.d("MainActivityInstanti",position+"");
+            return pageview1.get(position);
         }*/
-        new Thread(new Runnable() {
 
-            public void run() {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                image.compress(Bitmap.CompressFormat.PNG, 100, bos);
-                byte[] byteArray = bos.toByteArray();
+        @Override
+        public int getCount() {
+            return pageview1.size();
+        }
 
-                OkHttpClient client = new OkHttpClient();
-                RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                        .addFormDataPart("file", "test.png", RequestBody.create(MediaType.parse("image/*"),byteArray))
-                        .addFormDataPart("account",account_str)
-                        .addFormDataPart("board",board)
-                        .addFormDataPart("upload_time",upload_time)
-                        .build();
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return object==view;
+        }
+    }
 
-                Request request = new Request.Builder()
-                        .url("http://140.116.72.152/upload.php")
-                        .post(requestBody)
-                        .build();
-                try {
-                    Response response = client.newCall(request).execute();
-                    if(response.isSuccessful()){
-                        Log.i("Success tag",response.body().string());
-                        board = "上傳成功" + board;
-                        //textView.setText(board);
-                        board = ",";
-                    }
+    class GuidePageChangeListener implements ViewPager.OnPageChangeListener{
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+
+        }
+
+
+        @Override
+        //切換view時，下方圓點的變化。
+        public void onPageSelected(int position) {
+            tips[position].setBackgroundResource(R.mipmap.page_indicator_focused);
+            //這個圖片就是選中的view的圓點
+            for(int i=0;i<pageview.size();i++){
+                if (position != i) {
+                    tips[i].setBackgroundResource(R.mipmap.page_indicator_unfocused);
+                    //這個圖片是未選中view的圓點
                 }
-                catch (IOException e) { e.printStackTrace(); }
             }
-
-        }).start();
+        }
     }
 
-    private Bitmap getBitmapFromUri(Uri uri) throws IOException {
-        ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(uri, "r");
-        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-        Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
-        parcelFileDescriptor.close();
-        return image;
-    }
+    private Runnable GetUserRequest = new Runnable(){
+        public void run() {
+            OkHttpClient client = new OkHttpClient();
+            RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("account",sharedPreferences.getString("account",null))
+                    .addFormDataPart("input","now")
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://140.116.72.152/GetUserRequest.php")
+                    .post(requestBody)
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(response.isSuccessful()){
+                    Log.i("Success tag","check success");
+                    result = response.body().string();
+                    Log.i("Result",result);
+                }
+            }
+            catch (IOException e) { e.printStackTrace(); }
+        }
+    };
 }

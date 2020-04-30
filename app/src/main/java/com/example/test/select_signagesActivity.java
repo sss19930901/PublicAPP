@@ -61,6 +61,7 @@ public class select_signagesActivity extends AppCompatActivity {
                                     Intent intent = new Intent(select_signagesActivity.this, select_timeActivity.class);
                                     intent.putExtra("chosen_board", chosen_board);
                                     intent.putExtra("Shared", String.valueOf(Shared));
+                                    intent.putExtra("Source", "Publish");
                                     startActivity(intent);
                                 }
                             })

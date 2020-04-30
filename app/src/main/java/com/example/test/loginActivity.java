@@ -1,6 +1,9 @@
 package com.example.test;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,11 +31,17 @@ public class loginActivity extends AppCompatActivity {
     public static String result,account_str,password_str;
     TextView textView;
     Boolean login;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        sharedPreferences = getApplication().
+                getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
         textView = findViewById(R.id.textView10);
         loginbutton = findViewById(R.id.button_login2);
         loginbutton.setOnClickListener(new View.OnClickListener() {
@@ -74,22 +83,21 @@ public class loginActivity extends AppCompatActivity {
 
             if(result.equals("[\"1\"]")){
                 result = "登入成功";
-                login = true;
+                editor.putBoolean("login_state", true);
+                editor.putString("account", account_str);
+                editor.putString("password", password_str);
+                editor.commit();
                 }
-            else {
+            else
                 result = "帳號或密碼錯誤";
-                login = false;
-            }
+
             // 當這個執行緒完全跑完後執行
             runOnUiThread(new Runnable() {
                 public void run() {
+                    Log.i("TEST",String.valueOf(login));
                     textView.setText(result); // 更改顯示文字
-                    if (login) {
-                        //Intent intent = new Intent(loginActivity.this,MainActivity.class);
-                        getIntent().putExtra("login_account",account_str);
-                        getIntent().putExtra("login_password",password_str);
+                    if (sharedPreferences.getBoolean("login_state", false)) {
                         setResult(RESULT_OK,getIntent());
-                        //startActivity(intent);
                         finish();
                     }
                 }

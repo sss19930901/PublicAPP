@@ -1,7 +1,9 @@
 package com.example.test;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -27,21 +29,35 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class selectfileActivity extends AppCompatActivity {
-    String chosen_board,chosen_slot,chosen_ID = ",",file,account = "user001",playtime = ",",Shared;
+    String chosen_board,chosen_slot,chosen_ID = ",",file,account,playtime = ",",Shared,Source;
     Button confirm,cancel;
     String[] IDandState,file_ID,State;
     ImageView[] imageView;
     Boolean[] chosen_file;
     int count = 0,filecount = 0,usertime=120;
+    private SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_selectfile);
 
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        account = sharedPreferences.getString("account",null);
+
         Intent intent = getIntent();
         chosen_board = intent.getStringExtra("chosen_board");
         chosen_slot = intent.getStringExtra("chosen_slot");
         Shared = intent.getStringExtra("Shared");
+        Source = intent.getStringExtra("Source");
+        Log.i("chosen_board",chosen_board);
+        Log.i("chosen_slot",chosen_slot);
+        Log.i("Shared",Shared);
+        if(Source.equals("Publish"))
+            Log.i("Source","Publish");
+        else if(Source.equals("Update"))
+            Log.i("Source","Update");
+
         LinearLayout layer1 = findViewById(R.id.selectfile);
 
         try{
@@ -86,14 +102,20 @@ public class selectfileActivity extends AppCompatActivity {
                                     Toast.makeText(selectfileActivity.this, "尚未選擇檔案", Toast.LENGTH_LONG).show();
                                 else {
                                     try{
-                                        Thread thread = new Thread(Publish);
+                                        Thread thread;
+                                        if(Source.equals("Publish"))
+                                            thread = new Thread(Publish);
+                                        else if(Source.equals("Update"))
+                                            thread = new Thread(Update);
+                                        else
+                                            thread = new Thread();
                                         thread.start();
                                         thread.join();
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
                                 }
-                                Intent intent = new Intent(selectfileActivity.this, main_mapActivity.class);
+                                Intent intent = new Intent(selectfileActivity.this, MainActivity.class);
                                 startActivity(intent);
                             }
                         })
@@ -107,7 +129,7 @@ public class selectfileActivity extends AppCompatActivity {
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(selectfileActivity.this, main_mapActivity.class);
+                Intent intent = new Intent(selectfileActivity.this, MainActivity.class);
                 startActivity(intent);
             }
         });
@@ -148,8 +170,8 @@ public class selectfileActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         if(!imageView[temp].isSelected()){
-                            if(count == 2)
-                                Toast.makeText(selectfileActivity.this, "最多選擇兩個檔案", Toast.LENGTH_LONG).show();
+                            if(count == 3)
+                                Toast.makeText(selectfileActivity.this, "最多選擇三個檔案", Toast.LENGTH_LONG).show();
                             else {
                                 imageView[temp].setSelected(true);
                                 chosen_file[temp] = true;
@@ -178,8 +200,8 @@ public class selectfileActivity extends AppCompatActivity {
                         @Override
                         public void onClick(View v) {
                             if(!imageView[temp+1].isSelected()){
-                                if(count == 2)
-                                    Toast.makeText(selectfileActivity.this, "最多選擇兩個檔案", Toast.LENGTH_LONG).show();
+                                if(count == 3)
+                                    Toast.makeText(selectfileActivity.this, "最多選擇三個檔案", Toast.LENGTH_LONG).show();
                                 else {
                                     imageView[temp+1].setSelected(true);
                                     chosen_file[temp+1] = true;
@@ -261,6 +283,41 @@ public class selectfileActivity extends AppCompatActivity {
                 Response response = client.newCall(request).execute();
                 if(response.isSuccessful()){
                     Log.i("Success tag","check success");
+                    file = response.body().string();
+                    Log.i("Success tag",file);
+                    chosen_ID = ",";
+                }
+            }
+            catch (IOException e) { e.printStackTrace(); }
+        }
+    };
+
+    private Runnable Update = new Runnable(){
+        public void run() {
+            Log.i("account",account);
+            Log.i("chosen_board",chosen_board);
+            Log.i("chosen_slot",chosen_slot);
+            Log.i("chosen_ID",chosen_ID);
+            Log.i("playtime",playtime);
+            Log.i("Shared",Shared);
+
+            OkHttpClient client = new OkHttpClient();
+            RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("account",account)
+                    .addFormDataPart("board",chosen_board)
+                    .addFormDataPart("publish_slot",chosen_slot)
+                    .addFormDataPart("file_id",chosen_ID)
+                    .addFormDataPart("playtime",playtime)
+                    .addFormDataPart("Shared",Shared)
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://140.116.72.152/Update.php")
+                    .post(requestBody)
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(response.isSuccessful()){
+                    Log.i("Success tag+","check success");
                     file = response.body().string();
                     Log.i("Success tag",file);
                     chosen_ID = ",";

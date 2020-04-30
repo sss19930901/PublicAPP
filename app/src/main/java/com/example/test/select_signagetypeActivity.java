@@ -1,6 +1,8 @@
 package com.example.test;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,14 +23,15 @@ public class select_signagetypeActivity extends AppCompatActivity {
 
     Button usually,history,map;
     String account,board,inputdata;
+    private SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_signagetype);
 
-        Intent intent = getIntent();
-        account = intent.getStringExtra("account");
-        Log.i("account",account);
+        sharedPreferences = getApplication().getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        account = sharedPreferences.getString("account",null);
 
         usually = findViewById(R.id.usually);
         usually.setOnClickListener(new View.OnClickListener() {
